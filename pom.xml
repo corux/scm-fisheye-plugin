@@ -36,13 +36,7 @@
       <artifactId>jackson-mapper-asl</artifactId>
       <version>1.9.2</version>
     </dependency>
-    
-    <dependency>
-		<groupId>com.sun.jersey</groupId>
-		<artifactId>jersey-client</artifactId>
-		<version>1.18.3</version>
-	</dependency>
-    
+        
     <dependency>
     	<groupId>org.apache.httpcomponents</groupId>
     	<artifactId>httpclient</artifactId>
@@ -81,4 +75,10 @@
     </repository>
   
   </repositories>
+  <url>https://github.com/corux/scm-fisheye-plugin</url>
+  <scm>
+  	<connection>scm:git:https://github.com/corux/scm-fisheye-plugin</connection>
+  	<developerConnection>scm:git:https://github.com/corux/scm-fisheye-plugin</developerConnection>
+  	<url>https://github.com/corux/scm-fisheye-plugin</url>
+  </scm>
 </project>
