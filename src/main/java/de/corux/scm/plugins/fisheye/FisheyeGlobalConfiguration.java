@@ -13,6 +13,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * The global configuration object.
  */
@@ -40,6 +42,11 @@ public class FisheyeGlobalConfiguration implements Validateable
      */
     public URL getUrlParsed()
     {
+        if (StringUtils.isEmpty(getUrl()))
+        {
+            return null;
+        }
+
         try
         {
             return new URL(getUrl());

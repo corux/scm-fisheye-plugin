@@ -151,6 +151,11 @@ public class FisheyeConfiguration implements Validateable
      */
     public URL getUrlParsed()
     {
+        if (StringUtils.isEmpty(getUrl()))
+        {
+            return null;
+        }
+
         try
         {
             return new URL(getUrl());
