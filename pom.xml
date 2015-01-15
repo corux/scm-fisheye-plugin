@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>scm-plugins</artifactId>
+    <groupId>sonia.scm.plugins</groupId>
+    <version>1.23</version>
+  </parent>
+
+  <groupId>sonia.scm.plugins</groupId>
+  <artifactId>scm-fisheye-plugin</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0</version>
+  <name>${project.artifactId}</name>
+  <description>Commit hook to update fisheye repositories.</description>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>${servlet.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-jexl</artifactId>
+      <version>2.1.1</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+      <version>1.9.2</version>
+    </dependency>
+    
+    <dependency>
+		<groupId>com.sun.jersey</groupId>
+		<artifactId>jersey-client</artifactId>
+		<version>1.18.3</version>
+	</dependency>
+    
+    <dependency>
+    	<groupId>org.apache.httpcomponents</groupId>
+    	<artifactId>httpclient</artifactId>
+    	<version>4.3.6</version>
+    </dependency>
+    
+    <!-- test scope -->
+
+    <dependency>
+      <groupId>sonia.scm</groupId>
+      <artifactId>scm-test</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+  
+  <build>
+    <plugins>
+      
+      <plugin>
+        <groupId>sonia.scm.maven</groupId>
+        <artifactId>scm-maven-plugin</artifactId>
+        <version>1.30</version>
+      </plugin>
+      
+    </plugins>
+  </build>
+
+  <repositories>
+    
+    <repository>
+      <id>maven.scm-manager.org</id>
+      <name>scm-manager release repository</name>
+      <url>http://maven.scm-manager.org/nexus/content/groups/public</url>
+    </repository>
+  
+  </repositories>
+</project>

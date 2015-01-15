@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+
+  <information>
+    <author>Tobias Wallura</author>
+  </information>
+
+  <conditions>
+    <min-version>${project.parent.version}</min-version>
+  </conditions>
+
+  <packages>
+    <package>de.corux.scm.plugins.fisheye</package>
+  </packages>
+
+  <resources>
+    <script>/scm/corux.fisheye.globalconfigpanel.js</script>
+    <script>/scm/corux.fisheye.configpanel.js</script>
+  </resources>
+
+</plugin>
