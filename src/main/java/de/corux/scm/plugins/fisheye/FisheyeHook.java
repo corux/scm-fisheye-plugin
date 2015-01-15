@@ -3,6 +3,7 @@ package de.corux.scm.plugins.fisheye;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +25,13 @@ public class FisheyeHook extends PostReceiveRepositoryHook
      */
     private static final Logger logger = LoggerFactory.getLogger(FisheyeHook.class);
 
-    private final FisheyeClient client;
+    private final Provider<FisheyeClient> clientProvider;
     private final FisheyeContext context;
 
     @Inject
-    public FisheyeHook(final FisheyeClient client, final FisheyeContext context)
+    public FisheyeHook(final Provider<FisheyeClient> clientProvider, final FisheyeContext context)
     {
-        this.client = client;
+        this.clientProvider = clientProvider;
         this.context = context;
     }
 
@@ -38,6 +39,7 @@ public class FisheyeHook extends PostReceiveRepositoryHook
     public void onEvent(final RepositoryHookEvent event)
     {
         Repository repository = event.getRepository();
+        FisheyeClient client = clientProvider.get();
 
         if (repository != null)
         {
@@ -57,6 +59,10 @@ public class FisheyeHook extends PostReceiveRepositoryHook
                     if (!result && logger.isErrorEnabled())
                     {
                         logger.error(errorMsg);
+                    }
+                    else if (result && logger.isDebugEnabled())
+                    {
+                        logger.debug("Successfully executed fisheye hook. " + commonMsg);
                     }
 
                 }
