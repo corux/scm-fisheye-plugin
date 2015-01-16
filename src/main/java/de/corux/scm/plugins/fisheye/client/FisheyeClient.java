@@ -7,21 +7,13 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.auth.AuthenticationException;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.JavaType;
 
 import sonia.scm.ArgumentIsInvalidException;
+import sonia.scm.net.HttpClient;
+import sonia.scm.net.HttpRequest;
+import sonia.scm.net.HttpResponse;
 import de.corux.scm.plugins.fisheye.FisheyeContext;
 import de.corux.scm.plugins.fisheye.FisheyeGlobalConfiguration;
 
@@ -41,35 +33,12 @@ public class FisheyeClient
     private final HttpClient client;
 
     @Inject
-    public FisheyeClient(final FisheyeContext context)
+    public FisheyeClient(final FisheyeContext context, final HttpClient client)
     {
-        this(context.getGlobalConfiguration());
-    }
-
-    public FisheyeClient(final FisheyeGlobalConfiguration config)
-    {
-        this(config.getUrlParsed(), config.getApiToken(), null, null);
-    }
-
-    /**
-     * Instantiates a new fisheye client.
-     *
-     * @param baseUrl
-     *            the base url of the fisheye server.
-     * @param apiToken
-     *            the api token to authenticate to the fisheye api.
-     * @param username
-     *            the username to authenticate to the fisheye api.
-     * @param password
-     *            the password to authenticate to the fisheye api.
-     */
-    public FisheyeClient(final URL baseUrl, final String apiToken, final String username, final String password)
-    {
-        this.baseUrl = baseUrl;
-        this.apiToken = apiToken;
-        this.username = username;
-        this.password = password;
-        this.client = HttpClientBuilder.create().build();
+        FisheyeGlobalConfiguration configuration = context.getGlobalConfiguration();
+        this.client = client;
+        this.baseUrl = configuration.getUrlParsed();
+        this.apiToken = configuration.getApiToken();
     }
 
     /**
@@ -98,7 +67,7 @@ public class FisheyeClient
      * @throws AuthenticationException
      *             the authentication exception
      */
-    private void addHeaders(final HttpRequestBase request, final boolean useApiToken) throws AuthenticationException
+    private void addHeaders(final HttpRequest request, final boolean useApiToken)
     {
         request.addHeader("content-type", "application/json");
         request.addHeader("accept", "application/json");
@@ -109,9 +78,7 @@ public class FisheyeClient
         }
         else
         {
-            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
-            Header authenticateHeader = new BasicScheme().authenticate(credentials, request, null);
-            request.addHeader(authenticateHeader);
+            request.setBasicAuthentication(username, password);
         }
     }
 
@@ -126,17 +93,19 @@ public class FisheyeClient
     {
         try
         {
-            URL url = new URL(baseUrl, "/rest-service-fecru/admin/repositories/" + repository + "/incremental-index");
+            // should be changed to new api call: PUT
+            // /rest-service-fecru/admin/repositories/{name}/incremental-index
+            URL url = new URL(baseUrl, "/rest-service-fecru/admin/repositories-v1/" + repository + "/scan");
 
             // request
-            HttpPut request = new HttpPut(url.toURI());
+            HttpRequest request = new HttpRequest(url.toString());
             addHeaders(request, true);
 
             // response
-            HttpResponse response = client.execute(request);
-            int statusCode = response.getStatusLine().getStatusCode();
+            HttpResponse response = client.post(request);
+            int statusCode = response.getStatusCode();
 
-            return statusCode == HttpStatus.SC_ACCEPTED || statusCode == HttpStatus.SC_NO_CONTENT;
+            return statusCode == 200;
         }
         catch (Exception e)
         {
@@ -161,6 +130,7 @@ public class FisheyeClient
         {
             throw new ArgumentIsInvalidException("password");
         }
+
         try
         {
             int start = 0;
@@ -173,12 +143,12 @@ public class FisheyeClient
                         start, limit));
 
                 // request
-                HttpGet request = new HttpGet(url.toURI());
+                HttpRequest request = new HttpRequest(url.toString());
                 addHeaders(request, false);
 
                 // response
-                HttpResponse response = client.execute(request);
-                InputStream content = response.getEntity().getContent();
+                HttpResponse response = client.get(request);
+                InputStream content = response.getContent();
 
                 ObjectMapper mapper = new ObjectMapper();
                 JavaType type = mapper.getTypeFactory().constructParametricType(PagedList.class, Repository.class);
