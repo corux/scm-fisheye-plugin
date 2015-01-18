@@ -12,7 +12,7 @@
   <groupId>sonia.scm.plugins</groupId>
   <artifactId>scm-fisheye-plugin</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
+  <version>1.1-SNAPSHOT</version>
   <name>${project.artifactId}</name>
   <description>Commit hook to update fisheye repositories.</description>
 
@@ -68,5 +68,6 @@
   	<connection>scm:git:https://github.com/corux/scm-fisheye-plugin</connection>
   	<developerConnection>scm:git:https://github.com/corux/scm-fisheye-plugin</developerConnection>
   	<url>https://github.com/corux/scm-fisheye-plugin</url>
+    <tag>HEAD</tag>
   </scm>
 </project>
