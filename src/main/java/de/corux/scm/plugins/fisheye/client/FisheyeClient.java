@@ -1,5 +1,6 @@
 package de.corux.scm.plugins.fisheye.client;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -9,6 +10,8 @@ import javax.inject.Inject;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.JavaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import sonia.scm.ArgumentIsInvalidException;
 import sonia.scm.net.HttpClient;
@@ -16,6 +19,7 @@ import sonia.scm.net.HttpRequest;
 import sonia.scm.net.HttpResponse;
 import de.corux.scm.plugins.fisheye.FisheyeContext;
 import de.corux.scm.plugins.fisheye.FisheyeGlobalConfiguration;
+import de.corux.scm.plugins.fisheye.FisheyeHook;
 
 /**
  * Simple Fisheye HTTP Client.
@@ -31,6 +35,11 @@ public class FisheyeClient
     private String username;
     private String password;
     private final HttpClient client;
+
+    /**
+     * The logger for {@link FisheyeHook}.
+     */
+    private static final Logger logger = LoggerFactory.getLogger(FisheyeClient.class);
 
     @Inject
     public FisheyeClient(final FisheyeContext context, final HttpClient client)
@@ -88,39 +97,44 @@ public class FisheyeClient
      * @param repository
      *            the repository
      * @return true, if successful
+     * @throws IOException
      */
-    public boolean indexRepository(final String repository)
+    public boolean indexRepository(final String repository) throws IOException
     {
-        try
+        // should be changed to new api call: PUT
+        // /rest-service-fecru/admin/repositories/{name}/incremental-index
+        URL url = new URL(baseUrl, "/rest-service-fecru/admin/repositories-v1/" + repository + "/scan");
+
+        // request
+        HttpRequest request = new HttpRequest(url.toString());
+        addHeaders(request, true);
+
+        // response
+        HttpResponse response = client.post(request);
+        int statusCode = response.getStatusCode();
+
+        if (statusCode == 200)
         {
-            // should be changed to new api call: PUT
-            // /rest-service-fecru/admin/repositories/{name}/incremental-index
-            URL url = new URL(baseUrl, "/rest-service-fecru/admin/repositories-v1/" + repository + "/scan");
-
-            // request
-            HttpRequest request = new HttpRequest(url.toString());
-            addHeaders(request, true);
-
-            // response
-            HttpResponse response = client.post(request);
-            int statusCode = response.getStatusCode();
-
-            return statusCode == 200;
+            return true;
         }
-        catch (Exception e)
+        else
         {
-            throw new RuntimeException(e);
+            if (logger.isWarnEnabled())
+            {
+                logger.warn("Fisheye hook failed with statusCode {}", statusCode);
+            }
+            return false;
         }
-
     }
 
     /**
      * Lists all available repositories.
      *
      * @return the list of repositories.
+     * @throws IOException
      */
     @SuppressWarnings("unchecked")
-    public List<Repository> listRepositories()
+    public List<Repository> listRepositories() throws IOException
     {
         if (this.username == null)
         {
@@ -131,23 +145,24 @@ public class FisheyeClient
             throw new ArgumentIsInvalidException("password");
         }
 
-        try
+        int start = 0;
+        int limit = 1000;
+        PagedList<Repository> list;
+        List<Repository> result = new ArrayList<Repository>();
+        do
         {
-            int start = 0;
-            int limit = 1000;
-            PagedList<Repository> list;
-            List<Repository> result = new ArrayList<Repository>();
-            do
+            URL url = new URL(baseUrl, String.format("/rest-service-fecru/admin/repositories?start=%s&limit=%s", start,
+                    limit));
+
+            // request
+            HttpRequest request = new HttpRequest(url.toString());
+            addHeaders(request, false);
+
+            // response
+            HttpResponse response = client.get(request);
+            int statusCode = response.getStatusCode();
+            if (statusCode == 200)
             {
-                URL url = new URL(baseUrl, String.format("/rest-service-fecru/admin/repositories?start=%s&limit=%s",
-                        start, limit));
-
-                // request
-                HttpRequest request = new HttpRequest(url.toString());
-                addHeaders(request, false);
-
-                // response
-                HttpResponse response = client.get(request);
                 InputStream content = response.getContent();
 
                 ObjectMapper mapper = new ObjectMapper();
@@ -157,13 +172,17 @@ public class FisheyeClient
                 // read response
                 result.addAll(list.getValues());
                 start = list.getStart() + list.getSize();
-            } while (!list.isLastPage());
+            }
+            else
+            {
+                if (logger.isWarnEnabled())
+                {
+                    logger.warn("Listing fisheye repositories failed with statusCode {}", statusCode);
+                }
+                break;
+            }
+        } while (!list.isLastPage());
 
-            return result;
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
+        return result;
     }
 }

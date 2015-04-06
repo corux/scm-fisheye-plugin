@@ -1,5 +1,6 @@
 package de.corux.scm.plugins.fisheye;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Dictionary;
@@ -9,6 +10,9 @@ import java.util.List;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.corux.scm.plugins.fisheye.client.FisheyeClient;
 import de.corux.scm.plugins.fisheye.client.Repository;
@@ -23,6 +27,11 @@ public class RepositoryLinker
     private final FisheyeClient client;
     private final RepositoryManager repoManager;
     private final ScmConfiguration scmConfiguration;
+
+    /**
+     * The logger for {@link RepositoryLinker}.
+     */
+    private static final Logger logger = LoggerFactory.getLogger(RepositoryLinker.class);
 
     @Inject
     public RepositoryLinker(final FisheyeClient client, final RepositoryManager repoManager,
@@ -62,7 +71,16 @@ public class RepositoryLinker
         Dictionary<sonia.scm.repository.Repository, List<Repository>> dict = new Hashtable<sonia.scm.repository.Repository, List<Repository>>();
 
         Collection<sonia.scm.repository.Repository> scmRepositories = repoManager.getAll();
-        List<Repository> fisheyeRepositories = client.listRepositories();
+        List<Repository> fisheyeRepositories;
+        try
+        {
+            fisheyeRepositories = client.listRepositories();
+        }
+        catch (IOException e)
+        {
+            logger.error("Failed to retrieve fisheye repositories", e);
+            return dict;
+        }
 
         String baseUrl = scmConfiguration.getBaseUrl();
         for (sonia.scm.repository.Repository scmRepo : scmRepositories)
