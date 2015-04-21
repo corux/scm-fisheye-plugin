@@ -34,7 +34,7 @@ public class FisheyeContext
     @Inject
     public FisheyeContext(final StoreFactory storeFactory)
     {
-        this.store = storeFactory.getStore(FisheyeGlobalConfiguration.class, STORE_NAME);
+        store = storeFactory.getStore(FisheyeGlobalConfiguration.class, STORE_NAME);
         globalConfiguration = store.get();
 
         if (globalConfiguration == null)
