@@ -119,7 +119,7 @@ public class FisheyeClientTest
         fisheyeClient.listRepositories();
     }
 
-    @Test
+    @Test(expected=RuntimeException.class)
     public void testListRepositoriesInvalidStatusCode() throws IOException
     {
         // arrange
@@ -129,10 +129,7 @@ public class FisheyeClientTest
         when(response.getStatusCode()).thenReturn(401);
 
         // act
-        List<Repository> result = fisheyeClient.listRepositories();
-
-        // assert
-        assertTrue(result.isEmpty());
+        fisheyeClient.listRepositories();
     }
 
     @Test

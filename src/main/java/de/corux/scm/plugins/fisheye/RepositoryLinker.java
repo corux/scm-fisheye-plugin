@@ -79,7 +79,7 @@ public class RepositoryLinker
         catch (IOException e)
         {
             logger.error("Failed to retrieve fisheye repositories", e);
-            return dict;
+            throw new RuntimeException(e);
         }
 
         String baseUrl = scmConfiguration.getBaseUrl();

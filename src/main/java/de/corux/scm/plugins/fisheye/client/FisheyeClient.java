@@ -175,11 +175,7 @@ public class FisheyeClient
             }
             else
             {
-                if (logger.isWarnEnabled())
-                {
-                    logger.warn("Listing fisheye repositories failed with statusCode {}", statusCode);
-                }
-                break;
+                throw new RuntimeException("Listing fisheye repositories failed with statusCode " + statusCode);
             }
         } while (!list.isLastPage());
 
