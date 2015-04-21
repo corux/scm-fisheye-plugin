@@ -19,7 +19,6 @@ import sonia.scm.net.HttpRequest;
 import sonia.scm.net.HttpResponse;
 import de.corux.scm.plugins.fisheye.FisheyeContext;
 import de.corux.scm.plugins.fisheye.FisheyeGlobalConfiguration;
-import de.corux.scm.plugins.fisheye.FisheyeHook;
 
 /**
  * Simple Fisheye HTTP Client.
@@ -37,7 +36,7 @@ public class FisheyeClient
     private final HttpClient client;
 
     /**
-     * The logger for {@link FisheyeHook}.
+     * The logger for {@link FisheyeClient}.
      */
     private static final Logger logger = LoggerFactory.getLogger(FisheyeClient.class);
 
@@ -78,8 +77,9 @@ public class FisheyeClient
      */
     private void addHeaders(final HttpRequest request, final boolean useApiToken)
     {
-        request.addHeader("content-type", "application/json");
-        request.addHeader("accept", "application/json");
+        request.addHeader("Content-Type", "application/json");
+        request.addHeader("Accept", "application/json");
+        request.addParameters("", "");
 
         if (useApiToken)
         {

@@ -14,7 +14,7 @@ import com.google.inject.Singleton;
  * Handles the saving and retrieving of the fisheye configuration.
  */
 @Singleton
-public final class FisheyeContext
+public class FisheyeContext
 {
     /** Store name for the {@link FisheyeGlobalConfiguration}. */
     private static final String STORE_NAME = "fisheye";
