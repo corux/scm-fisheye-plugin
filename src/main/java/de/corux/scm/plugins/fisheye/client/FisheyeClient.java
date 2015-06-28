@@ -2,7 +2,6 @@ package de.corux.scm.plugins.fisheye.client;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,27 +12,30 @@ import org.codehaus.jackson.type.JavaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sonia.scm.ArgumentIsInvalidException;
-import sonia.scm.net.HttpClient;
-import sonia.scm.net.HttpRequest;
-import sonia.scm.net.HttpResponse;
 import de.corux.scm.plugins.fisheye.FisheyeContext;
 import de.corux.scm.plugins.fisheye.FisheyeGlobalConfiguration;
+import sonia.scm.ArgumentIsInvalidException;
+import sonia.scm.net.ahc.AdvancedHttpClient;
+import sonia.scm.net.ahc.AdvancedHttpRequest;
+import sonia.scm.net.ahc.AdvancedHttpRequestWithBody;
+import sonia.scm.net.ahc.AdvancedHttpResponse;
+import sonia.scm.net.ahc.BaseHttpRequest;
+import sonia.scm.util.UrlBuilder;
 
 /**
  * Simple Fisheye HTTP Client.
  * 
- * @see <a
- *      href="https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html">
+ * @see <a href=
+ *      "https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html">
  *      https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html</a>
  */
 public class FisheyeClient
 {
-    private final URL baseUrl;
+    private final String baseUrl;
     private final String apiToken;
     private String username;
     private String password;
-    private final HttpClient client;
+    private final AdvancedHttpClient client;
 
     /**
      * The logger for {@link FisheyeClient}.
@@ -41,11 +43,11 @@ public class FisheyeClient
     private static final Logger logger = LoggerFactory.getLogger(FisheyeClient.class);
 
     @Inject
-    public FisheyeClient(final FisheyeContext context, final HttpClient client)
+    public FisheyeClient(final FisheyeContext context, final AdvancedHttpClient client)
     {
         FisheyeGlobalConfiguration configuration = context.getGlobalConfiguration();
         this.client = client;
-        this.baseUrl = configuration.getUrlParsed();
+        this.baseUrl = configuration.getUrl();
         this.apiToken = configuration.getApiToken();
     }
 
@@ -64,7 +66,7 @@ public class FisheyeClient
     }
 
     /**
-     * Adds the request headers to the given request.
+     * Adds common request headers to the given request.
      *
      * @param request
      *            the request
@@ -72,23 +74,31 @@ public class FisheyeClient
      *            if <code>true</code>, the {@link #apiToken} will be used for
      *            authentication; otherwise the {@link #username} and
      *            {@link #password} are used.
-     * @throws AuthenticationException
-     *             the authentication exception
      */
-    private void addHeaders(final HttpRequest request, final boolean useApiToken)
+    private void addHeaders(final BaseHttpRequest<?> request, final boolean useApiToken)
     {
-        request.addHeader("Content-Type", "application/json");
-        request.addHeader("Accept", "application/json");
-        request.addParameters("", "");
+        request.header("Accept", "application/json");
 
         if (useApiToken)
         {
-            request.addHeader("X-Api-Key", apiToken);
+            request.header("X-Api-Key", apiToken);
         }
         else
         {
-            request.setBasicAuthentication(username, password);
+            request.basicAuth(username, password);
         }
+    }
+
+    /**
+     * {@inheritDoc FisheyeClient#addHeaders(BaseHttpRequest, boolean)}
+     * 
+     * @param request
+     * @param useApiToken
+     */
+    private void addHeaders(final AdvancedHttpRequestWithBody request, final boolean useApiToken)
+    {
+        request.contentType("application/json");
+        addHeaders((BaseHttpRequest<AdvancedHttpRequestWithBody>) request, useApiToken);
     }
 
     /**
@@ -101,28 +111,24 @@ public class FisheyeClient
      */
     public boolean indexRepository(final String repository) throws IOException
     {
-        // should be changed to new api call: PUT
-        // /rest-service-fecru/admin/repositories/{name}/incremental-index
-        URL url = new URL(baseUrl, "/rest-service-fecru/admin/repositories-v1/" + repository + "/scan");
-
         // request
-        HttpRequest request = new HttpRequest(url.toString());
+        String url = new UrlBuilder(baseUrl)
+                .append(String.format("/rest-service-fecru/admin/repositories/%s/incremental-index", repository))
+                .toString();
+        AdvancedHttpRequestWithBody request = client.put(url);
         addHeaders(request, true);
 
         // response
-        HttpResponse response = client.post(request);
-        int statusCode = response.getStatusCode();
+        AdvancedHttpResponse response = request.request();
+        int statusCode = response.getStatus();
 
-        if (statusCode == 200)
+        if (statusCode == 202 || statusCode == 204)
         {
             return true;
         }
         else
         {
-            if (logger.isWarnEnabled())
-            {
-                logger.warn("Fisheye hook failed with statusCode {}", statusCode);
-            }
+            logger.warn("Fisheye hook failed with statusCode {}", statusCode);
             return false;
         }
     }
@@ -133,7 +139,6 @@ public class FisheyeClient
      * @return the list of repositories.
      * @throws IOException
      */
-    @SuppressWarnings("unchecked")
     public List<Repository> listRepositories() throws IOException
     {
         if (this.username == null)
@@ -147,29 +152,32 @@ public class FisheyeClient
 
         int start = 0;
         int limit = 1000;
-        PagedList<Repository> list;
+        boolean isLastPage = false;
         List<Repository> result = new ArrayList<Repository>();
         do
         {
-            URL url = new URL(baseUrl, String.format("/rest-service-fecru/admin/repositories?start=%s&limit=%s", start,
-                    limit));
+            String url = new UrlBuilder(baseUrl)
+                    .append(String.format("/rest-service-fecru/admin/repositories?start=%s&limit=%s", start, limit))
+                    .toString();
 
             // request
-            HttpRequest request = new HttpRequest(url.toString());
+            AdvancedHttpRequest request = client.get(url);
             addHeaders(request, false);
 
             // response
-            HttpResponse response = client.get(request);
-            int statusCode = response.getStatusCode();
+            AdvancedHttpResponse response = request.request();
+            int statusCode = response.getStatus();
             if (statusCode == 200)
             {
-                InputStream content = response.getContent();
+                InputStream content = response.contentAsStream();
 
                 ObjectMapper mapper = new ObjectMapper();
                 JavaType type = mapper.getTypeFactory().constructParametricType(PagedList.class, Repository.class);
-                list = (PagedList<Repository>) mapper.readValue(content, type);
+                @SuppressWarnings("unchecked")
+                PagedList<Repository> list = (PagedList<Repository>) mapper.readValue(content, type);
 
                 // read response
+                isLastPage = list.isLastPage();
                 result.addAll(list.getValues());
                 start = list.getStart() + list.getSize();
             }
@@ -177,7 +185,7 @@ public class FisheyeClient
             {
                 throw new RuntimeException("Listing fisheye repositories failed with statusCode " + statusCode);
             }
-        } while (!list.isLastPage());
+        } while (!isLastPage);
 
         return result;
     }

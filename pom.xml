@@ -6,7 +6,7 @@
   <parent>
     <artifactId>scm-plugins</artifactId>
     <groupId>sonia.scm.plugins</groupId>
-    <version>1.23</version>
+    <version>1.46</version>
   </parent>
 
   <groupId>sonia.scm.plugins</groupId>
@@ -24,20 +24,20 @@
       <version>${servlet.version}</version>
       <scope>provided</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-client</artifactId>
       <version>${jersey.version}</version>
       <scope>provided</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
       <version>1.9.13</version>
     </dependency>
-    
+
     <!-- test scope -->
 
     <dependency>
@@ -48,27 +48,27 @@
     </dependency>
 
   </dependencies>
-  
+
   <build>
     <plugins>
-      
+
       <plugin>
         <groupId>sonia.scm.maven</groupId>
         <artifactId>scm-maven-plugin</artifactId>
-        <version>1.30</version>
+        <version>1.46</version>
       </plugin>
-      
+
     </plugins>
   </build>
 
   <repositories>
-    
+
     <repository>
       <id>maven.scm-manager.org</id>
       <name>scm-manager release repository</name>
       <url>http://maven.scm-manager.org/nexus/content/groups/public</url>
     </repository>
-  
+
   </repositories>
   <url>https://github.com/corux/scm-fisheye-plugin</url>
   <scm>

@@ -2,61 +2,103 @@ package de.corux.scm.plugins.fisheye.client;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Matchers;
-
-import sonia.scm.ArgumentIsInvalidException;
-import sonia.scm.net.HttpClient;
-import sonia.scm.net.HttpRequest;
-import sonia.scm.net.HttpResponse;
-import de.corux.scm.plugins.fisheye.FisheyeContext;
-import de.corux.scm.plugins.fisheye.FisheyeGlobalConfiguration;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import de.corux.scm.plugins.fisheye.FisheyeContext;
+import de.corux.scm.plugins.fisheye.FisheyeGlobalConfiguration;
+import sonia.scm.ArgumentIsInvalidException;
+import sonia.scm.net.ahc.AdvancedHttpClient;
+import sonia.scm.net.ahc.AdvancedHttpResponse;
+import sonia.scm.net.ahc.BaseHttpRequest;
+
 public class FisheyeClientTest
 {
-    private HttpClient httpClient;
+    private TestAdvancedHttpClient httpClient;
     private FisheyeClient fisheyeClient;
     private final String token = "TestToken";
-    private final String url = "http://test.url/";
-    private HttpRequest expectedRequest;
+    private final String url = "http://test.url/fecru";
+    private TestAdvancedHttpRequest expectedRequest;
+
+    private abstract class TestAdvancedHttpClient extends AdvancedHttpClient
+    {
+        private AdvancedHttpResponse response;
+        private BaseHttpRequest<?> request;
+
+        public void setResponse(final AdvancedHttpResponse response)
+        {
+            this.response = response;
+        }
+
+        public BaseHttpRequest<?> getRequest()
+        {
+            return request;
+        }
+
+        @Override
+        protected AdvancedHttpResponse request(BaseHttpRequest<?> request) throws IOException
+        {
+            this.request = request;
+            return response;
+        }
+    }
+
+    private class TestAdvancedHttpRequest extends BaseHttpRequest<TestAdvancedHttpRequest>
+    {
+        public TestAdvancedHttpRequest(AdvancedHttpClient client, String method, String url)
+        {
+            super(client, method, url);
+        }
+
+        @Override
+        protected TestAdvancedHttpRequest self()
+        {
+            return this;
+        }
+    }
 
     public void initMockFisheyeClient(boolean useToken) throws IOException
     {
         FisheyeContext context = mock(FisheyeContext.class);
-        httpClient = mock(HttpClient.class);
+        httpClient = mock(TestAdvancedHttpClient.class);
+        doCallRealMethod().when(httpClient).put(Matchers.anyString());
+        doCallRealMethod().when(httpClient).get(Matchers.anyString());
+        doCallRealMethod().when(httpClient).request(Matchers.any(BaseHttpRequest.class));
+        doCallRealMethod().when(httpClient).setResponse(Matchers.any(AdvancedHttpResponse.class));
+        doCallRealMethod().when(httpClient).getRequest();
+
         FisheyeGlobalConfiguration configuration = mock(FisheyeGlobalConfiguration.class);
         when(context.getGlobalConfiguration()).thenReturn(configuration);
-        when(configuration.getUrlParsed()).thenReturn(new URL(url));
+        when(configuration.getUrl()).thenReturn(url);
         when(configuration.getApiToken()).thenReturn(token);
 
         fisheyeClient = new FisheyeClient(context, httpClient);
-
-        expectedRequest = new HttpRequest(url);
-
+        expectedRequest = new TestAdvancedHttpRequest(httpClient, null, url);
         if (useToken)
         {
-            expectedRequest.addHeader("X-Api-Key", token);
+            expectedRequest.header("X-Api-Key", token);
         }
         else
         {
-            expectedRequest.setBasicAuthentication("test-username", "test-password");
+            expectedRequest.basicAuth("test-username", "test-password");
             fisheyeClient.SetCredentials("test-username", "test-password");
         }
     }
@@ -66,17 +108,19 @@ public class FisheyeClientTest
     {
         // arrange
         initMockFisheyeClient(true);
-        String repository = "TestRepo";
-        HttpResponse response = mock(HttpResponse.class);
-        when(httpClient.post(Matchers.any(HttpRequest.class))).thenReturn(response);
-        when(response.getStatusCode()).thenReturn(200);
+        AdvancedHttpResponse response = mock(AdvancedHttpResponse.class);
+        when(response.getStatus()).thenReturn(202, 204);
+        httpClient.setResponse(response);
 
-        // act
-        boolean result = fisheyeClient.indexRepository(repository);
+        // assert status code 202
+        boolean result202 = fisheyeClient.indexRepository("TestRepo");
+        assertTrue(result202);
+        assertTrue(areEqual(expectedRequest, httpClient.getRequest()));
 
-        // assert
-        assertTrue(result);
-        verify(httpClient, times(1)).post(Matchers.argThat(new CheckRequestHeadersArgumentMatcher(expectedRequest)));
+        // assert status code 204
+        boolean result204 = fisheyeClient.indexRepository("TestRepo");
+        assertTrue(result204);
+        assertTrue(areEqual(expectedRequest, httpClient.getRequest()));
     }
 
     @Test
@@ -84,16 +128,12 @@ public class FisheyeClientTest
     {
         // arrange
         initMockFisheyeClient(true);
-        String repository = "TestRepo";
-        HttpResponse response = mock(HttpResponse.class);
-        when(httpClient.post(Matchers.any(HttpRequest.class))).thenReturn(response);
-        when(response.getStatusCode()).thenReturn(401);
+        AdvancedHttpResponse response = mock(AdvancedHttpResponse.class);
+        when(response.getStatus()).thenReturn(401);
+        httpClient.setResponse(response);
 
-        // act
-        boolean result = fisheyeClient.indexRepository(repository);
-
-        // assert
-        verify(httpClient, times(1)).post(Matchers.argThat(new CheckRequestHeadersArgumentMatcher(expectedRequest)));
+        // assert failed status code
+        boolean result = fisheyeClient.indexRepository("TestRepo");
         assertFalse(result);
     }
 
@@ -119,14 +159,14 @@ public class FisheyeClientTest
         fisheyeClient.listRepositories();
     }
 
-    @Test(expected=RuntimeException.class)
+    @Test(expected = RuntimeException.class)
     public void testListRepositoriesInvalidStatusCode() throws IOException
     {
         // arrange
         initMockFisheyeClient(false);
-        HttpResponse response = mock(HttpResponse.class);
-        when(httpClient.get(Matchers.any(HttpRequest.class))).thenReturn(response);
-        when(response.getStatusCode()).thenReturn(401);
+        AdvancedHttpResponse response = mock(AdvancedHttpResponse.class);
+        when(response.getStatus()).thenReturn(401);
+        httpClient.setResponse(response);
 
         // act
         fisheyeClient.listRepositories();
@@ -200,10 +240,10 @@ public class FisheyeClientTest
             jsonStreams[i] = new ByteArrayInputStream(mapper.writeValueAsBytes(list));
         }
 
-        HttpResponse response = mock(HttpResponse.class);
-        when(httpClient.get(Matchers.any(HttpRequest.class))).thenReturn(response);
-        when(response.getStatusCode()).thenReturn(200);
-        when(response.getContent()).thenReturn(jsonStreams[0], Arrays.copyOfRange(jsonStreams, 1, numHttpCalls));
+        AdvancedHttpResponse response = mock(AdvancedHttpResponse.class);
+        when(response.getStatus()).thenReturn(200);
+        when(response.contentAsStream()).thenReturn(jsonStreams[0], Arrays.copyOfRange(jsonStreams, 1, numHttpCalls));
+        httpClient.setResponse(response);
 
         // act
         List<Repository> result = fisheyeClient.listRepositories();
@@ -214,8 +254,8 @@ public class FisheyeClientTest
         {
             areEqual(repositories.get(i), result.get(i));
         }
-        verify(httpClient, times(numHttpCalls)).get(
-                Matchers.argThat(new CheckRequestHeadersArgumentMatcher(expectedRequest)));
+        assertTrue(areEqual(expectedRequest, httpClient.getRequest()));
+        verify(httpClient, times(numHttpCalls)).get(Matchers.anyString());
     }
 
     private boolean areEqual(Repository o1, Repository o2)
@@ -268,64 +308,46 @@ public class FisheyeClientTest
         return ObjectUtils.equals(o1.getPath(), o2.getPath()) && ObjectUtils.equals(o1.getUrl(), o2.getUrl());
     }
 
-    private class CheckRequestHeadersArgumentMatcher extends ArgumentMatcher<HttpRequest>
+    private boolean areEqual(BaseHttpRequest<?> a, BaseHttpRequest<?> b)
     {
-        HttpRequest thisObject;
-
-        public CheckRequestHeadersArgumentMatcher(HttpRequest thisObject)
+        if (!b.getUrl().startsWith(a.getUrl()))
         {
-            this.thisObject = thisObject;
+            return false;
         }
 
-        @Override
-        public boolean matches(Object argument)
+        // check headers
+        if (a.getHeaders() != null)
         {
-            if (!(argument instanceof HttpRequest))
+            for (String header : a.getHeaders().keySet())
             {
-                return false;
-            }
-
-            HttpRequest other = (HttpRequest) argument;
-
-            // check basic auth
-            if (!ObjectUtils.equals(thisObject.getUsername(), other.getUsername())
-                    || !ObjectUtils.equals(thisObject.getPassword(), other.getPassword()))
-            {
-                return false;
-            }
-
-            // check headers
-            if (thisObject.getHeaders() != null)
-            {
-                for (String header : thisObject.getHeaders().keySet())
-                {
-                    if (!other.getHeaders().containsKey(header)
-                            || !areHeaderEqual(thisObject.getHeaders().get(header), other.getHeaders().get(header)))
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        private boolean areHeaderEqual(List<String> a, List<String> b)
-        {
-            if (a.size() != b.size())
-            {
-                return false;
-            }
-
-            for (int i = 0; i < a.size(); i++)
-            {
-                if (a.get(i) != b.get(i))
+                if (!b.getHeaders().containsKey(header)
+                        || !areHeaderEqual(a.getHeaders().get(header), b.getHeaders().get(header)))
                 {
                     return false;
                 }
             }
-
-            return true;
         }
+
+        return true;
+    }
+
+    private boolean areHeaderEqual(Collection<String> a, Collection<String> b)
+    {
+        if (a.size() != b.size())
+        {
+            return false;
+        }
+
+        Iterator<String> aIterator = a.iterator();
+        Iterator<String> bIterator = b.iterator();
+        while (aIterator.hasNext())
+        {
+            if (!aIterator.next().equals(bIterator.next()))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
