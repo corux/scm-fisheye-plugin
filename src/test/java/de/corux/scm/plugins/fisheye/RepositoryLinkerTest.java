@@ -70,6 +70,35 @@ public class RepositoryLinkerTest
     }
 
     @Test
+    public void testUpdateRepositoriesWhenFisheyeRepoIsNotAnUrl() throws IOException
+    {
+        // arrange
+        String repoFisheyeUrl = "file://C:\\Users\\fecru\\home/amps-repos/checkstyle-svn";
+        String repoScmUrl = "http://scm.test.com/scm/repo.git";
+        String repoFisheyeName = "fisheye-git-repo";
+
+        de.corux.scm.plugins.fisheye.client.Repository repo = new de.corux.scm.plugins.fisheye.client.Repository();
+        repo.setName(repoFisheyeName);
+        GitRepository git = new GitRepository();
+        repo.setGit(git);
+
+        git.setLocation(repoFisheyeUrl);
+        when(repository.createUrl(Matchers.anyString())).thenReturn(repoScmUrl);
+
+        List<de.corux.scm.plugins.fisheye.client.Repository> fisheyeReposList = Arrays.asList(repo);
+        when(client.listRepositories()).thenReturn(fisheyeReposList);
+        when(repoManager.getAll()).thenReturn(Arrays.asList(repository));
+
+        // act
+        linker.updateRepositoriesWithFisheyeNames(username, password, null);
+
+        // assert
+        verify(client, times(1)).SetCredentials(username, password);
+        String prop = FisheyeConfiguration.PROPERTY_FISHEYE_REPOSITORIES;
+        verify(repository, times(1)).setProperty(Matchers.eq(prop), Matchers.eq(""));
+    }
+
+    @Test
     public void testUpdateRepositoriesWhenRepoToUpdateDoesNotExist() throws IOException
     {
         // arrange

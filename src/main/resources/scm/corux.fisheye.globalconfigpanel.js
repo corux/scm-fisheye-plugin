@@ -224,7 +224,7 @@ corux.fisheye.LinkRepositoriesWizard = Ext
                 inputValue : item.repository,
                 name : 'repositories',
                 id : id,
-                checked : item.newFisheyeRepositories.length > 0,
+                checked : diffArray.length !== 0 && item.newFisheyeRepositories.length > 0,
                 disabled : diffArray.length === 0,
                 boxLabel : diffArray.length > 0 ? this.diffLabel + diffArray : this.diffNoChangeLabel,
               });

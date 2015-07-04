@@ -121,6 +121,7 @@ public class RepositoryLinker
 
     private List<Repository> getFisheyeRepositoriesForUrl(final String url, final List<Repository> fisheyeRepositories)
     {
+        String normalizedUrl = normalizeUrl(url);
         List<Repository> result = new ArrayList<Repository>();
         for (Repository repo : fisheyeRepositories)
         {
@@ -138,7 +139,7 @@ public class RepositoryLinker
                 repoUrl = repo.getSvn().getUrl();
             }
 
-            if (normalizeUrl(url).equals(normalizeUrl(repoUrl)))
+            if (normalizedUrl.equals(normalizeUrl(repoUrl)))
             {
                 result.add(repo);
             }
@@ -148,7 +149,8 @@ public class RepositoryLinker
     }
 
     /**
-     * Removes the protocol and user information from the given URI.
+     * Removes the protocol, user information and trailing slash from the given
+     * URI. If the uri cannot be parsed as URI, the string is returned as-is.
      *
      * @param uri
      *            the URI.
@@ -156,7 +158,20 @@ public class RepositoryLinker
      */
     private String normalizeUrl(final String uri)
     {
-        UriBuilder uriBuilder = UriBuilder.fromUri(uri).userInfo(null).scheme(null);
-        return uriBuilder.build().toString();
+        try
+        {
+            UriBuilder uriBuilder = UriBuilder.fromUri(uri).userInfo(null).scheme(null);
+            String url = uriBuilder.build().toString();
+            if (url.endsWith("/"))
+            {
+                url = url.substring(0, url.length() - 1);
+            }
+
+            return url;
+        }
+        catch (IllegalArgumentException e)
+        {
+            return uri;
+        }
     }
 }
