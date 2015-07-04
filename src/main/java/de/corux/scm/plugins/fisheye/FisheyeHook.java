@@ -8,11 +8,11 @@ import javax.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.corux.scm.plugins.fisheye.client.FisheyeClient;
 import sonia.scm.plugin.ext.Extension;
 import sonia.scm.repository.PostReceiveRepositoryHook;
 import sonia.scm.repository.Repository;
 import sonia.scm.repository.RepositoryHookEvent;
-import de.corux.scm.plugins.fisheye.client.FisheyeClient;
 
 /**
  * The commit hook to send the fisheye scan request.
@@ -49,33 +49,27 @@ public class FisheyeHook extends PostReceiveRepositoryHook
                 String commonMsg = String.format("SCM repository: %s, Fisheye repository: %s", repository.getName(),
                         fisheyeRepo);
                 String errorMsg = "Failed to execute fisheye hook. " + commonMsg;
-                if (logger.isDebugEnabled())
-                {
-                    logger.debug("Executing fisheye hook. " + commonMsg);
-                }
+                logger.debug("Executing fisheye hook. {}", commonMsg);
                 try
                 {
                     boolean result = client.indexRepository(fisheyeRepo);
-                    if (!result && logger.isErrorEnabled())
+                    if (result)
+                    {
+                        logger.info("Successfully executed fisheye hook. {}", commonMsg);
+                    }
+                    else
                     {
                         logger.error(errorMsg);
-                    }
-                    else if (result && logger.isDebugEnabled())
-                    {
-                        logger.debug("Successfully executed fisheye hook. " + commonMsg);
                     }
 
                 }
                 catch (Exception e)
                 {
-                    if (logger.isErrorEnabled())
-                    {
-                        logger.error(errorMsg, e);
-                    }
+                    logger.error(errorMsg, e);
                 }
             }
         }
-        else if (logger.isErrorEnabled())
+        else
         {
             logger.error("received hook without repository");
         }

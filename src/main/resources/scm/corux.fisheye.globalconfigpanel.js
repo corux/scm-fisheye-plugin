@@ -1,111 +1,309 @@
-Ext.ns("corux.fisheye");
+Ext.ns('corux.fisheye');
 
 corux.fisheye.LinkWindow = Ext.extend(Ext.Window, {
-  titleText : 'Link repositories',
-  okText : 'Ok',
-  cancelText : 'Cancel',
-  connectingText : 'Connecting',
-  statusText : 'Status',
-  failedText : 'linking repositories failed!',
-  successText : 'Repositories linked successfully.',
-  waitMsgText : 'Sending data...',
-
-  usernameText : 'Username',
-  usernameHelpText : 'Username used to retrieve available repositories from the fisheye server.',
-
-  passwordText : 'Password',
-  passwordHelpText : 'Password used to retrieve available repositories from the fisheye server.',
-
-  helpText : 'Retrieves all available repositories from fisheye and links them to the SCM repositories',
-
+  title : 'Link repositories wizard',
   initComponent : function() {
+    this.addEvents('finish');
     var config = {
+      title : this.title,
       layout : 'fit',
-      width : 300,
-      height : 170,
-      closable : false,
-      resizable : false,
+      width : 420,
+      height : 190,
+      closable : true,
+      resizable : true,
       plain : true,
       border : false,
       modal : true,
-      title : this.titleText,
+      bodyCssClass : 'x-panel-mc',
       items : [ {
-        id : 'linkRepositoryForm',
-        url : restUrl + 'plugins/fisheye/link.json',
-        frame : true,
-        xtype : 'form',
-        monitorValid : true,
-        defaultType : 'textfield',
-        items : [ {
-          name : 'username',
-          fieldLabel : this.usernameText,
-          helpText : this.usernameHelpText,
-          allowBlank : false
-        }, {
-          name : 'password',
-          fieldLabel : this.passwordText,
-          helpText : this.passwordHelpText,
-          inputType : 'password',
-          allowBlank : false
-        }, {
-          xtype : 'panel',
-          html : this.helpText
-        } ],
-        buttons : [ {
-          text : this.okText,
-          formBind : true,
-          scope : this,
-          handler : this.linkRepositories
-        }, {
-          text : this.cancelText,
-          scope : this,
-          handler : this.cancel
-        } ]
+        id : 'fisheyeLinkRepositoriesWizard',
+        xtype : 'fisheyeLinkRepositoriesWizard',
+        listeners : {
+          finish : {
+            fn : this.onFinish,
+            scope : this
+          }
+        }
       } ]
     };
-
     Ext.apply(this, Ext.apply(this.initialConfig, config));
-    Sonia.action.ChangePasswordWindow.superclass.initComponent.apply(this, arguments);
+    corux.fisheye.LinkWindow.superclass.initComponent.apply(this, arguments)
   },
 
-  linkRepositories : function() {
-    var form = Ext.getCmp('linkRepositoryForm').getForm();
-    form.submit({
-      scope : this,
-      method : 'POST',
-      waitTitle : this.connectingText,
-      waitMsg : this.waitMsgText,
-      success : function() {
-        if (debug) {
-          console.debug(this.successText);
-        }
-        Ext.MessageBox.show({
-          title : this.statusText,
-          msg : this.successText,
-          buttons : Ext.MessageBox.OK,
-          icon : Ext.MessageBox.INFO
-        });
-        this.close();
-      },
-
-      failure : function() {
-        if (debug) {
-          console.debug(this.failedText);
-        }
-        Ext.MessageBox.show({
-          title : this.statusText,
-          msg : this.failedText,
-          buttons : Ext.MessageBox.OK,
-          icon : Ext.MessageBox.ERROR
-        });
-      }
-    });
-  },
-
-  cancel : function() {
-    this.close();
+  onFinish : function(config) {
+    this.fireEvent('finish', config);
+    this.close()
   }
 });
+
+corux.fisheye.LinkRepositoriesWizard = Ext
+    .extend(
+        Ext.Panel,
+        {
+          titleText : 'Link repositories',
+          okText : 'Ok',
+          cancelText : 'Cancel',
+          connectingText : 'Connecting',
+          statusText : 'Status',
+          failedText : 'Failed to retrieve fisheye repositories. Check your credentials.',
+          successText : 'Repositories linked successfully.',
+          waitMsgText : 'Sending data...',
+
+          credentialsCardHelpText : 'Enter the login credentials for your fisheye instance. These credentials will be used to retrieve the list of available repositories from fisheye.',
+          usernameText : 'Username',
+          passwordText : 'Password',
+
+          selectRepositoriesCardHelpText : 'Select which of the repositories should be updated to the found fisheye repositories. Existing links will be removed and replaced with the found values.',
+          diffLabel : 'Diff: ',
+          diffNoChangeLabel : 'no changes found',
+
+          statusCardSuccess : '<b>Repositories were successfully updated</b>.',
+          statusCardFailed : '<b>Failed to update repositories</b>',
+
+          backText : 'Back',
+          nextText : 'Next',
+          closeBtnText : 'Close',
+
+          initComponent : function() {
+            this.addEvents('finish');
+            var config = {
+              layout : 'card',
+              activeItem : 0,
+              bbar : [ '->', {
+                id : 'move-prev',
+                text : this.backText,
+                handler : this.navHandler.createDelegate(this, [ -1 ]),
+                disabled : true,
+                scope : this
+              }, {
+                id : 'move-next',
+                text : this.nextText,
+                handler : this.navHandler.createDelegate(this, [ 1 ]),
+                disabled : false,
+                scope : this
+              }, {
+                id : 'close-btn',
+                text : this.closeBtnText,
+                handler : this.applyChanges,
+                disabled : true,
+                scope : this
+              } ],
+              defaults : {
+                autoScroll : true,
+                listeners : {
+                  clientvalidation : {
+                    fn : this.formValidityMonitor,
+                    scope : this
+                  }
+                }
+              },
+              items : [ {
+                id : 'linkCredentialsCard',
+                url : restUrl + 'plugins/fisheye/link/retrieve-mapping.json',
+                xtype : 'form',
+                monitorValid : true,
+                defaultType : 'textfield',
+                items : [ {
+                  xtype : 'panel',
+                  cls : 'x-form-item',
+                  html : this.credentialsCardHelpText
+                }, {
+                  name : 'username',
+                  fieldLabel : this.usernameText,
+                  allowBlank : false
+                }, {
+                  name : 'password',
+                  fieldLabel : this.passwordText,
+                  inputType : 'password',
+                  allowBlank : false
+                } ]
+              }, {
+                id : 'linkSelectRepositoriesCard',
+                url : restUrl + 'plugins/fisheye/link.json',
+                xtype : 'form',
+                monitorValid : true,
+                defaultType : 'textfield',
+                items : [ {
+                  name : 'username',
+                  xtype : 'hidden',
+                }, {
+                  name : 'password',
+                  xtype : 'hidden',
+                }, {
+                  xtype : 'panel',
+                  cls : 'x-form-item',
+                  html : this.selectRepositoriesCardHelpText
+                } ]
+              }, {
+                id : 'linkStatusCard',
+                items : []
+              } ]
+            };
+
+            Ext.apply(this, Ext.apply(this.initialConfig, config));
+            corux.fisheye.LinkRepositoriesWizard.superclass.initComponent.apply(this, arguments);
+          },
+
+          formValidityMonitor : function(card, valid) {
+            var activeCard = this.getLayout().activeItem;
+            if (activeCard === card) {
+              var nextButton = Ext.getCmp('move-next');
+              if (valid && nextButton.disabled) {
+                nextButton.setDisabled(false);
+              } else if (!valid && !nextButton.disabled) {
+                nextButton.setDisabled(true);
+              }
+            }
+          },
+
+          navHandler : function(direction) {
+            var layout = this.getLayout();
+            var nextItem = layout.activeItem.nextSibling();
+            var prevItem = layout.activeItem.previousSibling();
+
+            var nextId = null;
+            if (direction === 1 && nextItem !== null) {
+              nextId = nextItem.getId();
+            } else if (direction === -1 && prevItem !== null) {
+              nextId = prevItem.getId();
+            }
+
+            // do custom logic
+            var currentId = layout.activeItem.getId();
+            if (currentId === 'linkCredentialsCard' && nextId === 'linkSelectRepositoriesCard') {
+              this.retrieveRepositoryMapping(layout.activeItem, nextItem);
+            } else if (currentId === 'linkSelectRepositoriesCard' && nextId === 'linkStatusCard') {
+              this.updateRepositoryMapping(layout.activeItem, nextItem);
+            }
+
+            // select next card
+            if (nextId !== null) {
+              layout.setActiveItem(nextId);
+            }
+
+            // set state for buttons
+            nextItem = layout.activeItem.nextSibling();
+            prevItem = layout.activeItem.previousSibling();
+            var activeForm = layout.activeItem.form;
+            var isFormValid = !activeForm || activeForm.isValid();
+            Ext.getCmp('move-prev').setDisabled(prevItem === null);
+            Ext.getCmp('move-next').setDisabled(!isFormValid || nextItem === null);
+            Ext.getCmp('close-btn').setDisabled(nextItem !== null);
+          },
+
+          setRepositoryMappingInWizard : function(listCard, mapping) {
+            if (debug) {
+              console.debug(this.successText);
+            }
+
+            mapping.sort(function(a, b) {
+              return a.repository.localeCompare(b.repository);
+            });
+
+            for (var i = 0; i < mapping.length; i++) {
+              var item = mapping[i];
+              var diffArray = [];
+              for (var j = 0; j < item.currentFisheyeRepositories.length; j++) {
+                var currentRepo = item.currentFisheyeRepositories[j];
+                if (item.newFisheyeRepositories.indexOf(currentRepo) === -1) {
+                  diffArray.push('-' + currentRepo);
+                }
+              }
+              for (var j = 0; j < item.newFisheyeRepositories.length; j++) {
+                var newRepo = item.newFisheyeRepositories[j];
+                if (item.currentFisheyeRepositories.indexOf(newRepo) === -1) {
+                  diffArray.push('+' + newRepo);
+                }
+              }
+
+              var id = 'repo-' + item.repository;
+              listCard.remove(id);
+              listCard.add({
+                xtype : 'checkbox',
+                fieldLabel : item.repository,
+                inputValue : item.repository,
+                name : 'repositories',
+                id : id,
+                checked : item.newFisheyeRepositories.length > 0,
+                disabled : diffArray.length === 0,
+                boxLabel : diffArray.length > 0 ? this.diffLabel + diffArray : this.diffNoChangeLabel,
+              });
+            }
+            listCard.doLayout();
+          },
+
+          setUpdateStatusInWizard : function(statusCard, action) {
+            var html = this.statusCardSuccess;
+            if (!action.response || action.response.status >= 400) {
+              html = this.statusCardFailed;
+            }
+
+            var id = 'status';
+            statusCard.remove(id);
+            statusCard.add({
+              xtype : 'panel',
+              id : id,
+              html : html,
+              cls : 'x-form-item'
+            });
+            statusCard.doLayout();
+          },
+
+          retrieveRepositoryMapping : function(credentialsCard, listCard) {
+            credentialsCard.getForm().submit({
+              scope : this,
+              method : 'POST',
+              waitTitle : this.connectingText,
+              waitMsg : this.waitMsgText,
+              success : function(form, action) {
+                this.setRepositoryMappingInWizard(listCard, action.result);
+              },
+              failure : function(form, action) {
+                if (action.response.status === 200) {
+                  this.setRepositoryMappingInWizard(listCard, action.result);
+                  return;
+                }
+                this.navHandler(-1);
+                if (debug) {
+                  console.debug(this.failedText);
+                }
+                Ext.MessageBox.show({
+                  title : this.statusText,
+                  msg : this.failedText,
+                  buttons : Ext.MessageBox.OK,
+                  icon : Ext.MessageBox.ERROR
+                });
+              }
+            });
+          },
+
+          updateRepositoryMapping : function(listCard, statusCard) {
+            var form = listCard.getForm();
+            // add username/password from credentials page
+            form.setValues(listCard.previousSibling().getForm().getValues());
+
+            form.submit({
+              scope : this,
+              method : 'POST',
+              waitTitle : this.connectingText,
+              waitMsg : this.waitMsgText,
+              success : function(form, action) {
+                this.setUpdateStatusInWizard(statusCard, action);
+              },
+              failure : function(form, action) {
+                this.setUpdateStatusInWizard(statusCard, action);
+              }
+            });
+          },
+
+          applyChanges : function() {
+            var panel = Ext.getCmp('repositories');
+            if (panel) {
+              panel.getGrid().reload();
+            }
+            this.fireEvent('finish');
+          }
+        });
 
 corux.fisheye.GlobalConfigPanel = Ext
     .extend(
@@ -123,11 +321,9 @@ corux.fisheye.GlobalConfigPanel = Ext
           apiTokenHelpText : 'API token used to issue repository scan requests.',
 
           linkText : 'Link repositories',
-          linkButtonText : 'Open configuration',
-          linkHelpText : 'Retrieves all available repositories from fisheye and links them to the SCM repositories',
+          linkButtonText : 'Open wizard',
 
           initComponent : function() {
-
             var config = {
               title : this.titleText,
               items : [ {
@@ -154,7 +350,6 @@ corux.fisheye.GlobalConfigPanel = Ext
                 fieldLabel : this.linkText,
                 name : 'x-link-repositories',
                 text : this.linkButtonText,
-                helpText : this.linkHelpText,
                 handler : function(btn) {
                   var win = new corux.fisheye.LinkWindow();
                   win.show();
@@ -207,7 +402,8 @@ corux.fisheye.GlobalConfigPanel = Ext
         });
 
 // register xtype
-Ext.reg("fisheyeGlobalConfigPanel", corux.fisheye.GlobalConfigPanel);
+Ext.reg('fisheyeGlobalConfigPanel', corux.fisheye.GlobalConfigPanel);
+Ext.reg('fisheyeLinkRepositoriesWizard', corux.fisheye.LinkRepositoriesWizard);
 
 // register config panel
 registerGeneralConfigPanel({

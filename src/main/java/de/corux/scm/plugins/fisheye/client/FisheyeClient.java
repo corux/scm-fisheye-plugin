@@ -108,6 +108,7 @@ public class FisheyeClient
      *            the repository
      * @return true, if successful
      * @throws IOException
+     *             thrown, when an API call was unsuccessful.
      */
     public boolean indexRepository(final String repository) throws IOException
     {
@@ -138,6 +139,7 @@ public class FisheyeClient
      *
      * @return the list of repositories.
      * @throws IOException
+     *             thrown, when an API call was unsuccessful.
      */
     public List<Repository> listRepositories() throws IOException
     {
@@ -183,7 +185,7 @@ public class FisheyeClient
             }
             else
             {
-                throw new RuntimeException("Listing fisheye repositories failed with statusCode " + statusCode);
+                throw new IOException("Listing fisheye repositories failed with statusCode " + statusCode);
             }
         } while (!isLastPage);
 

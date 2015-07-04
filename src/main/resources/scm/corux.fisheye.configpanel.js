@@ -37,7 +37,7 @@ corux.fisheye.ConfigPanel = Ext.extend(Sonia.repository.PropertiesFormPanel, {
   }
 });
 
-Ext.reg("fisheyeConfigPanel", corux.fisheye.ConfigPanel);
+Ext.reg('fisheyeConfigPanel', corux.fisheye.ConfigPanel);
 
 Sonia.repository.openListeners.push(function(repository, panels) {
   if (Sonia.repository.isOwner(repository)) {

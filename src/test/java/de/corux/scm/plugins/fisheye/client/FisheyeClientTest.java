@@ -159,7 +159,7 @@ public class FisheyeClientTest
         fisheyeClient.listRepositories();
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = IOException.class)
     public void testListRepositoriesInvalidStatusCode() throws IOException
     {
         // arrange

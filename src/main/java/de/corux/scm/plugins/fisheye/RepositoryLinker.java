@@ -3,10 +3,10 @@ package de.corux.scm.plugins.fisheye;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
@@ -43,21 +43,34 @@ public class RepositoryLinker
     }
 
     /**
-     * Update all scm repositories with the fisheye repository names.
+     * Update scm repositories with the fisheye repository names.
+     *
+     * @param username
+     *            the username for accessing the fisheye API
+     * @param password
+     *            the password for accessing the fisheye API
+     * @param repositories
+     *            the scm repository names to link with fisheye repositories.
+     *            set this to <code>null</code> to link all repositories.
      */
-    public void updateRepositoriesWithFisheyeNames(final String username, final String password)
+    public void updateRepositoriesWithFisheyeNames(final String username, final String password,
+            final List<String> repositories)
     {
-        client.SetCredentials(username, password);
-
-        Dictionary<sonia.scm.repository.Repository, List<Repository>> list = linkRepositories();
-        Enumeration<sonia.scm.repository.Repository> keys = list.keys();
-        while (keys.hasMoreElements())
+        Map<sonia.scm.repository.Repository, List<Repository>> map = retrieveScmRepositoryToFisheyeRepositoriesMapping(
+                username, password);
+        Set<sonia.scm.repository.Repository> keys = map.keySet();
+        for (sonia.scm.repository.Repository repo : keys)
         {
-            sonia.scm.repository.Repository repo = keys.nextElement();
+            if (repositories != null && !repositories.contains(repo.getName()))
+            {
+                // skip not-selected repositories
+                continue;
+            }
+
             FisheyeConfiguration fisheyeConfiguration = new FisheyeConfiguration(repo);
 
             List<String> fisheyeRepoNames = new ArrayList<String>();
-            for (Repository i : list.get(repo))
+            for (Repository i : map.get(repo))
             {
                 fisheyeRepoNames.add(i.getName());
             }
@@ -66,9 +79,22 @@ public class RepositoryLinker
         }
     }
 
-    private Dictionary<sonia.scm.repository.Repository, List<Repository>> linkRepositories()
+    /**
+     * Retrieve the scm repository to fisheye repositories mapping. For each scm
+     * repository a list of fisheye repositories, which are configured to use
+     * the url of the scm repository, are returned.
+     *
+     * @param username
+     *            the username for accessing the fisheye API
+     * @param password
+     *            the password for accessing the fisheye API
+     * @return the scm to fisheye repository mapping.
+     */
+    public Map<sonia.scm.repository.Repository, List<Repository>> retrieveScmRepositoryToFisheyeRepositoriesMapping(
+            final String username, final String password)
     {
-        Dictionary<sonia.scm.repository.Repository, List<Repository>> dict = new Hashtable<sonia.scm.repository.Repository, List<Repository>>();
+        client.SetCredentials(username, password);
+        Map<sonia.scm.repository.Repository, List<Repository>> map = new HashMap<sonia.scm.repository.Repository, List<Repository>>();
 
         Collection<sonia.scm.repository.Repository> scmRepositories = repoManager.getAll();
         List<Repository> fisheyeRepositories;
@@ -87,10 +113,10 @@ public class RepositoryLinker
         {
             String url = scmRepo.createUrl(baseUrl);
             List<Repository> repos = getFisheyeRepositoriesForUrl(url, fisheyeRepositories);
-            dict.put(scmRepo, repos);
+            map.put(scmRepo, repos);
         }
 
-        return dict;
+        return map;
     }
 
     private List<Repository> getFisheyeRepositoriesForUrl(final String url, final List<Repository> fisheyeRepositories)
