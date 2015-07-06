@@ -43,6 +43,12 @@ public class FisheyeLinkRepositoriesResource
 
     /**
      * Retrieves all possible mappings for fisheye to scm repositories.
+     *
+     * @param username
+     *            the username
+     * @param password
+     *            the password
+     * @return the list of mappings for fisheye to scm repositories.
      */
     @POST
     @Path("retrieve-mapping")
@@ -71,6 +77,13 @@ public class FisheyeLinkRepositoriesResource
 
     /**
      * Links all of the selected repositories with the fisheye repositories.
+     *
+     * @param username
+     *            the username
+     * @param password
+     *            the password
+     * @param selectedRepositories
+     *            the selected repositories
      */
     @POST
     @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })

@@ -125,10 +125,10 @@ corux.fisheye.LinkRepositoriesWizard = Ext
                 defaultType : 'textfield',
                 items : [ {
                   name : 'username',
-                  xtype : 'hidden',
+                  xtype : 'hidden'
                 }, {
                   name : 'password',
-                  xtype : 'hidden',
+                  xtype : 'hidden'
                 }, {
                   xtype : 'panel',
                   cls : 'x-form-item',
@@ -226,7 +226,7 @@ corux.fisheye.LinkRepositoriesWizard = Ext
                 id : id,
                 checked : diffArray.length !== 0 && item.newFisheyeRepositories.length > 0,
                 disabled : diffArray.length === 0,
-                boxLabel : diffArray.length > 0 ? this.diffLabel + diffArray : this.diffNoChangeLabel,
+                boxLabel : diffArray.length > 0 ? this.diffLabel + diffArray : this.diffNoChangeLabel
               });
             }
             listCard.doLayout();
