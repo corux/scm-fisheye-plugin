@@ -196,11 +196,10 @@ corux.fisheye.LinkRepositoriesWizard = Ext
               console.debug(this.successText);
             }
 
-            for (var i = 0; i < mapping.length; i++) {
-              var item = mapping[i];
+            mapping.forEach(function(item) {
               item.diff = [];
-              for (var j = 0; j < item.currentFisheyeRepositories.length; j++) {
-                var currentRepo = item.currentFisheyeRepositories[j];
+              for (var i = 0; i < item.currentFisheyeRepositories.length; i++) {
+                var currentRepo = item.currentFisheyeRepositories[i];
                 if (item.newFisheyeRepositories.indexOf(currentRepo) === -1) {
                   item.diff.push('-' + currentRepo);
                 }
@@ -211,7 +210,7 @@ corux.fisheye.LinkRepositoriesWizard = Ext
                   item.diff.push('+' + newRepo);
                 }
               }
-            }
+            });
 
             mapping.sort(function(a, b) {
               if (a.diff.length !== b.diff.length && (a.diff.length === 0 || b.diff.length === 0)) {
@@ -220,9 +219,7 @@ corux.fisheye.LinkRepositoriesWizard = Ext
               return a.repository.localeCompare(b.repository);
             });
 
-            for (var i = 0; i < mapping.length; i++) {
-              var item = mapping[i];
-
+            mapping.forEach(function(item) {
               var id = 'repo-' + item.repository;
               listCard.remove(id);
               listCard.add({
@@ -235,7 +232,7 @@ corux.fisheye.LinkRepositoriesWizard = Ext
                 disabled : item.diff.length === 0,
                 boxLabel : '<b>' + item.repository + '</b>: ' + (item.diff.length > 0 ? this.diffLabel + item.diff : this.diffNoChangeLabel)
               });
-            }
+            }, this);
             listCard.doLayout();
           },
 
