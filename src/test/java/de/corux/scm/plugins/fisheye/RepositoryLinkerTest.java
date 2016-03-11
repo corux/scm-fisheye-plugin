@@ -28,7 +28,6 @@ public class RepositoryLinkerTest
     private RepositoryLinker linker;
     private FisheyeClient client;
     private RepositoryManager repoManager;
-    private ScmConfiguration scmConfiguration;
     private Repository repository;
 
     private final String username = "test-username";
@@ -39,9 +38,8 @@ public class RepositoryLinkerTest
     {
         client = mock(FisheyeClient.class);
         repoManager = mock(RepositoryManager.class);
-        scmConfiguration = mock(ScmConfiguration.class);
         repository = mock(Repository.class);
-        linker = new RepositoryLinker(client, repoManager, scmConfiguration);
+        linker = new RepositoryLinker(client, repoManager, mock(ScmConfiguration.class));
     }
 
     @Test
