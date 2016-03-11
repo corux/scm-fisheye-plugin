@@ -220,13 +220,13 @@ corux.fisheye.LinkRepositoriesWizard = Ext
               listCard.remove(id);
               listCard.add({
                 xtype : 'checkbox',
-                fieldLabel : item.repository,
                 inputValue : item.repository,
                 name : 'repositories',
                 id : id,
+                hideLabel: true,
                 checked : diffArray.length !== 0 && item.newFisheyeRepositories.length > 0,
                 disabled : diffArray.length === 0,
-                boxLabel : diffArray.length > 0 ? this.diffLabel + diffArray : this.diffNoChangeLabel
+                boxLabel : '<b>' + item.repository + '</b>: ' + (diffArray.length > 0 ? this.diffLabel + diffArray : this.diffNoChangeLabel)
               });
             }
             listCard.doLayout();
