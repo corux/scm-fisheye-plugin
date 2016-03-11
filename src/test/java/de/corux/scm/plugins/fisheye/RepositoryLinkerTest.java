@@ -93,7 +93,7 @@ public class RepositoryLinkerTest
         linker.updateRepositoriesWithFisheyeNames(username, password, null);
 
         // assert
-        verify(client, times(1)).SetCredentials(username, password);
+        verify(client, times(1)).setCredentials(username, password);
         String prop = FisheyeConfiguration.PROPERTY_FISHEYE_REPOSITORIES;
         verify(repository, times(1)).setProperty(Matchers.eq(prop), Matchers.eq(""));
     }
@@ -220,7 +220,7 @@ public class RepositoryLinkerTest
         linker.updateRepositoriesWithFisheyeNames(username, password, reposToUpdate);
 
         // assert
-        verify(client, times(1)).SetCredentials(username, password);
+        verify(client, times(1)).setCredentials(username, password);
         String prop = FisheyeConfiguration.PROPERTY_FISHEYE_REPOSITORIES;
 
         if (reposToUpdate == null || reposToUpdate.contains(repository.getName()))

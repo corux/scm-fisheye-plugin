@@ -99,7 +99,7 @@ public class FisheyeClientTest
         else
         {
             expectedRequest.basicAuth("test-username", "test-password");
-            fisheyeClient.SetCredentials("test-username", "test-password");
+            fisheyeClient.setCredentials("test-username", "test-password");
         }
     }
 
@@ -142,7 +142,7 @@ public class FisheyeClientTest
     {
         // arrange
         initMockFisheyeClient(false);
-        fisheyeClient.SetCredentials(null, "password");
+        fisheyeClient.setCredentials(null, "password");
 
         // act
         fisheyeClient.listRepositories();
@@ -153,7 +153,7 @@ public class FisheyeClientTest
     {
         // arrange
         initMockFisheyeClient(false);
-        fisheyeClient.SetCredentials("username", null);
+        fisheyeClient.setCredentials("username", null);
 
         // act
         fisheyeClient.listRepositories();

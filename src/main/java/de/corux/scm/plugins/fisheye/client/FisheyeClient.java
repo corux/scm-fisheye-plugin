@@ -52,14 +52,14 @@ public class FisheyeClient
     }
 
     /**
-     * Sets the REST api credentials.
+     * Sets the REST API credentials.
      *
      * @param username
      *            the username
      * @param password
      *            the password
      */
-    public void SetCredentials(final String username, final String password)
+    public void setCredentials(final String username, final String password)
     {
         this.username = username;
         this.password = password;

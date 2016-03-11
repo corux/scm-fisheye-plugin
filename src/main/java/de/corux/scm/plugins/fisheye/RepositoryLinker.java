@@ -93,7 +93,7 @@ public class RepositoryLinker
     public Map<sonia.scm.repository.Repository, List<Repository>> retrieveScmRepositoryToFisheyeRepositoriesMapping(
             final String username, final String password)
     {
-        client.SetCredentials(username, password);
+        client.setCredentials(username, password);
         Map<sonia.scm.repository.Repository, List<Repository>> map = new HashMap<sonia.scm.repository.Repository, List<Repository>>();
 
         Collection<sonia.scm.repository.Repository> scmRepositories = repoManager.getAll();
@@ -105,7 +105,7 @@ public class RepositoryLinker
         catch (IOException e)
         {
             logger.error("Failed to retrieve fisheye repositories", e);
-            throw new RuntimeException(e);
+            throw new FisheyeException(e);
         }
 
         String baseUrl = scmConfiguration.getBaseUrl();

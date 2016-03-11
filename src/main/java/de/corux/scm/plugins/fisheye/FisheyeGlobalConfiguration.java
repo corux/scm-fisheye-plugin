@@ -53,7 +53,7 @@ public class FisheyeGlobalConfiguration implements Validateable
         }
         catch (MalformedURLException e)
         {
-            throw new RuntimeException(e);
+            throw new FisheyeException(e);
         }
     }
 
