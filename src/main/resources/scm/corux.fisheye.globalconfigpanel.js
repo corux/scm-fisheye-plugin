@@ -196,25 +196,32 @@ corux.fisheye.LinkRepositoriesWizard = Ext
               console.debug(this.successText);
             }
 
-            mapping.sort(function(a, b) {
-              return a.repository.localeCompare(b.repository);
-            });
-
             for (var i = 0; i < mapping.length; i++) {
               var item = mapping[i];
-              var diffArray = [];
+              item.diff = [];
               for (var j = 0; j < item.currentFisheyeRepositories.length; j++) {
                 var currentRepo = item.currentFisheyeRepositories[j];
                 if (item.newFisheyeRepositories.indexOf(currentRepo) === -1) {
-                  diffArray.push('-' + currentRepo);
+                  item.diff.push('-' + currentRepo);
                 }
               }
               for (var j = 0; j < item.newFisheyeRepositories.length; j++) {
                 var newRepo = item.newFisheyeRepositories[j];
                 if (item.currentFisheyeRepositories.indexOf(newRepo) === -1) {
-                  diffArray.push('+' + newRepo);
+                  item.diff.push('+' + newRepo);
                 }
               }
+            }
+
+            mapping.sort(function(a, b) {
+              if (a.diff.length !== b.diff.length && (a.diff.length === 0 || b.diff.length === 0)) {
+                return b.diff.length - a.diff.length;
+              }
+              return a.repository.localeCompare(b.repository);
+            });
+
+            for (var i = 0; i < mapping.length; i++) {
+              var item = mapping[i];
 
               var id = 'repo-' + item.repository;
               listCard.remove(id);
@@ -224,9 +231,9 @@ corux.fisheye.LinkRepositoriesWizard = Ext
                 name : 'repositories',
                 id : id,
                 hideLabel: true,
-                checked : diffArray.length !== 0 && item.newFisheyeRepositories.length > 0,
-                disabled : diffArray.length === 0,
-                boxLabel : '<b>' + item.repository + '</b>: ' + (diffArray.length > 0 ? this.diffLabel + diffArray : this.diffNoChangeLabel)
+                checked : item.diff.length !== 0 && item.newFisheyeRepositories.length > 0,
+                disabled : item.diff.length === 0,
+                boxLabel : '<b>' + item.repository + '</b>: ' + (item.diff.length > 0 ? this.diffLabel + item.diff : this.diffNoChangeLabel)
               });
             }
             listCard.doLayout();
