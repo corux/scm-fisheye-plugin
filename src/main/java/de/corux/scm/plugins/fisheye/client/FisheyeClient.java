@@ -12,6 +12,7 @@ import org.codehaus.jackson.type.JavaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.corux.scm.plugins.fisheye.FisheyeConfiguration;
 import de.corux.scm.plugins.fisheye.FisheyeContext;
 import de.corux.scm.plugins.fisheye.FisheyeGlobalConfiguration;
 import sonia.scm.ArgumentIsInvalidException;
@@ -21,6 +22,7 @@ import sonia.scm.net.ahc.AdvancedHttpRequestWithBody;
 import sonia.scm.net.ahc.AdvancedHttpResponse;
 import sonia.scm.net.ahc.BaseHttpRequest;
 import sonia.scm.util.UrlBuilder;
+import sonia.scm.util.Util;
 
 /**
  * Simple Fisheye HTTP Client.
@@ -31,8 +33,8 @@ import sonia.scm.util.UrlBuilder;
  */
 public class FisheyeClient
 {
-    private final String baseUrl;
-    private final String apiToken;
+    private String baseUrl;
+    private String apiToken;
     private String username;
     private String password;
     private final AdvancedHttpClient client;
@@ -49,6 +51,21 @@ public class FisheyeClient
         this.client = client;
         this.baseUrl = configuration.getUrl();
         this.apiToken = configuration.getApiToken();
+    }
+
+    /**
+     * Updates the clients configuration from the repository configuration.
+     *
+     * @param configuration
+     *            the repository configuration
+     */
+    public void updateConfigFromRepository(final FisheyeConfiguration configuration)
+    {
+        if (Util.isNotEmpty(configuration.getUrl()))
+        {
+            this.baseUrl = configuration.getUrl();
+            this.apiToken = configuration.getApiToken();
+        }
     }
 
     /**

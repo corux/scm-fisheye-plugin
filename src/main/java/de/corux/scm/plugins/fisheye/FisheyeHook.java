@@ -43,6 +43,7 @@ public class FisheyeHook extends PostReceiveRepositoryHook
 
         if (repository != null)
         {
+            client.updateConfigFromRepository(context.getConfiguration(repository));
             List<String> repositories = context.getFisheyeRepositories(repository);
             for (String fisheyeRepo : repositories)
             {
