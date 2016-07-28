@@ -20,9 +20,6 @@ import sonia.scm.repository.RepositoryHookEvent;
 @Extension
 public class FisheyeHook extends PostReceiveRepositoryHook
 {
-    /**
-     * The logger for {@link FisheyeHook}.
-     */
     private static final Logger logger = LoggerFactory.getLogger(FisheyeHook.class);
 
     private final Provider<FisheyeClient> clientProvider;

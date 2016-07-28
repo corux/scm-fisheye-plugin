@@ -1,16 +1,14 @@
 package de.corux.scm.plugins.fisheye;
 
-import sonia.scm.Validateable;
-import sonia.scm.repository.Repository;
-import sonia.scm.util.Util;
-
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+
+import sonia.scm.Validateable;
+import sonia.scm.repository.Repository;
+import sonia.scm.util.Util;
 
 /**
  * The repository configuration object.
@@ -24,8 +22,7 @@ public class FisheyeConfiguration implements Validateable
     public static final String PROPERTY_FISHEYE_APITOKEN = "fisheye.api-token";
 
     /**
-     * Repository property for a comma seperated list of fisheye repository
-     * names.
+     * Repository property for a comma seperated list of fisheye repository names.
      */
     public static final String PROPERTY_FISHEYE_REPOSITORIES = "fisheye.repositories";
 
@@ -58,8 +55,9 @@ public class FisheyeConfiguration implements Validateable
     }
 
     /**
-     * Instantiates a new fisheye configuration. This constructor reads the
-     * properties from the repository and stores it in the configuration object.
+     * Instantiates a new fisheye configuration.
+     * 
+     * This constructor reads the properties from the repository and stores it in the configuration object.
      *
      * @param repository
      *            the repository to read the properties from.
@@ -82,9 +80,14 @@ public class FisheyeConfiguration implements Validateable
         this.repositories = Collections.unmodifiableList(list);
     }
 
+    @Override
+    public boolean isValid()
+    {
+        return Util.isNotEmpty(url) && Util.isNotEmpty(apiToken);
+    }
+
     /**
-     * Returns the api token which is used for authentication when requesting a
-     * fisheye repository scan.
+     * Returns the api token which is used for authentication when requesting a fisheye repository scan.
      *
      * @return fisheye api token
      */
@@ -142,38 +145,5 @@ public class FisheyeConfiguration implements Validateable
     public String getUrl()
     {
         return url;
-    }
-
-    /**
-     * Gets the url parsed as {@link URL}.
-     *
-     * @return the parsed url
-     */
-    public URL getUrlParsed()
-    {
-        if (StringUtils.isEmpty(getUrl()))
-        {
-            return null;
-        }
-
-        try
-        {
-            return new URL(getUrl());
-        }
-        catch (MalformedURLException e)
-        {
-            throw new FisheyeException(e);
-        }
-    }
-
-    /**
-     * Return true, if the configuration is valid.
-     *
-     * @return true, if the configuration is valid
-     */
-    @Override
-    public boolean isValid()
-    {
-        return Util.isNotEmpty(url) && Util.isNotEmpty(apiToken);
     }
 }

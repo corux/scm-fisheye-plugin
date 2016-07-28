@@ -27,22 +27,17 @@ import sonia.scm.util.Util;
 /**
  * Simple Fisheye HTTP Client.
  * 
- * @see <a href=
- *      "https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html">
+ * @see <a href="https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html">
  *      https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html</a>
  */
 public class FisheyeClient
 {
+    private static final Logger logger = LoggerFactory.getLogger(FisheyeClient.class);
+    private final AdvancedHttpClient client;
     private String baseUrl;
     private String apiToken;
     private String username;
     private String password;
-    private final AdvancedHttpClient client;
-
-    /**
-     * The logger for {@link FisheyeClient}.
-     */
-    private static final Logger logger = LoggerFactory.getLogger(FisheyeClient.class);
 
     @Inject
     public FisheyeClient(final FisheyeContext context, final AdvancedHttpClient client)
@@ -88,9 +83,8 @@ public class FisheyeClient
      * @param request
      *            the request
      * @param useApiToken
-     *            if <code>true</code>, the {@link #apiToken} will be used for
-     *            authentication; otherwise the {@link #username} and
-     *            {@link #password} are used.
+     *            if <code>true</code>, the {@link #apiToken} will be used for authentication; otherwise the
+     *            {@link #username} and {@link #password} are used.
      */
     private void addHeaders(final BaseHttpRequest<?> request, final boolean useApiToken)
     {

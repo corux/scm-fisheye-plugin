@@ -1,19 +1,12 @@
 package de.corux.scm.plugins.fisheye;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import sonia.scm.Validateable;
-import sonia.scm.util.Util;
-
-//~--- JDK imports ------------------------------------------------------------
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.apache.commons.lang.StringUtils;
+import sonia.scm.Validateable;
+import sonia.scm.util.Util;
 
 /**
  * The global configuration object.
@@ -33,28 +26,6 @@ public class FisheyeGlobalConfiguration implements Validateable
     public String getUrl()
     {
         return url;
-    }
-
-    /**
-     * Gets the url parsed as {@link URL}.
-     *
-     * @return the parsed url
-     */
-    public URL getUrlParsed()
-    {
-        if (StringUtils.isEmpty(getUrl()))
-        {
-            return null;
-        }
-
-        try
-        {
-            return new URL(getUrl());
-        }
-        catch (MalformedURLException e)
-        {
-            throw new FisheyeException(e);
-        }
     }
 
     public void setUrl(final String url)

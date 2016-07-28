@@ -24,14 +24,10 @@ import sonia.scm.repository.RepositoryManager;
  */
 public class RepositoryLinker
 {
+    private static final Logger logger = LoggerFactory.getLogger(RepositoryLinker.class);
     private final FisheyeClient client;
     private final RepositoryManager repoManager;
     private final ScmConfiguration scmConfiguration;
-
-    /**
-     * The logger for {@link RepositoryLinker}.
-     */
-    private static final Logger logger = LoggerFactory.getLogger(RepositoryLinker.class);
 
     @Inject
     public RepositoryLinker(final FisheyeClient client, final RepositoryManager repoManager,
@@ -50,8 +46,8 @@ public class RepositoryLinker
      * @param password
      *            the password for accessing the fisheye API
      * @param repositories
-     *            the scm repository names to link with fisheye repositories.
-     *            set this to <code>null</code> to link all repositories.
+     *            the scm repository names to link with fisheye repositories. set this to <code>null</code> to link all
+     *            repositories.
      */
     public void updateRepositoriesWithFisheyeNames(final String username, final String password,
             final List<String> repositories)
@@ -80,9 +76,8 @@ public class RepositoryLinker
     }
 
     /**
-     * Retrieve the scm repository to fisheye repositories mapping. For each scm
-     * repository a list of fisheye repositories, which are configured to use
-     * the url of the scm repository, are returned.
+     * Retrieve the scm repository to fisheye repositories mapping. For each scm repository a list of fisheye
+     * repositories, which are configured to use the url of the scm repository, are returned.
      *
      * @param username
      *            the username for accessing the fisheye API
@@ -149,8 +144,8 @@ public class RepositoryLinker
     }
 
     /**
-     * Removes the protocol, user information and trailing slash from the given
-     * URI. If the uri cannot be parsed as URI, the string is returned as-is.
+     * Removes the protocol, user information and trailing slash from the given URI. If the uri cannot be parsed as URI,
+     * the string is returned as-is.
      *
      * @param uri
      *            the URI.
