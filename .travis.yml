@@ -7,3 +7,9 @@ before_install:
 after_success:
   - mvn jacoco:report
   - java -cp ~/codacy-coverage-reporter-assembly-latest.jar com.codacy.CodacyCoverageReporter -l Java -r target/site/jacoco/jacoco.xml
+
+deploy:
+  provider: script
+  script: mvn deploy --settings settings.xml -DskipTests=true
+  on:
+    tags: true
