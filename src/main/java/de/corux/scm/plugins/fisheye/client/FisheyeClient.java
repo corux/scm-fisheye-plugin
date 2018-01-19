@@ -21,6 +21,7 @@ import sonia.scm.net.ahc.AdvancedHttpRequest;
 import sonia.scm.net.ahc.AdvancedHttpRequestWithBody;
 import sonia.scm.net.ahc.AdvancedHttpResponse;
 import sonia.scm.net.ahc.BaseHttpRequest;
+import sonia.scm.net.ahc.HttpMethod;
 import sonia.scm.util.UrlBuilder;
 import sonia.scm.util.Util;
 
@@ -110,6 +111,13 @@ public class FisheyeClient
     {
         request.contentType("application/json");
         addHeaders((BaseHttpRequest<AdvancedHttpRequestWithBody>) request, useApiToken);
+
+        // IIS requires the "Content-Length" header to be set, even if the body is empty (see status code 411).
+        if (request.getMethod() == HttpMethod.POST || request.getMethod() == HttpMethod.PUT)
+        {
+            // Need to set a non-null content, as the "Content-Length" header won't be included otherwise.
+            request.stringContent("");
+        }
     }
 
     /**
